@@ -15,20 +15,28 @@ public struct UserService {
 		self.session = session
 	}
 
-	public func login(with user: GIDGoogleUser) async throws {
+	public func login(with user: GIDGoogleUser) async throws -> User? {
 		guard let idToken = user.idToken?.tokenString else {
 			throw Error.idTokenNotFound(user: user)
 		}
 		guard let expiration = user.idToken?.expirationDate else {
-			return
+			return nil
 		}
 		let url = URL(string: "http://localhost:8080/auth/google/login")!
 		var request = URLRequest(url: url)
+		request.httpMethod = "POST"
 		request.httpBody = try JSONSerialization.data(withJSONObject: [
 			"idToken": idToken,
-			"expirationDate": expiration.timeIntervalSince1970
+			"expirationDate": expiration.timeIntervalSince1970,
+			"email": user.profile?.email,
 		])
-		session.dataTask(with: request)
+		let (data, _) = try await session.data(for: request)
+		print(try JSONSerialization.jsonObject(with: data))
+		let decoder = JSONDecoder()
+//		decoder.keyDecodingStrategy = .convertFromSnakeCase
+		let user = try decoder.decode(User.self, from: data)
+		print(user.email, user.id, user.oidcToken, user.oidcProvider)
+		return user
 	}
 }
 

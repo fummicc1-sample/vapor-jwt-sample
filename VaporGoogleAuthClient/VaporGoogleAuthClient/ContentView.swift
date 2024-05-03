@@ -10,28 +10,43 @@ import GoogleSignIn
 import GoogleSignInSwift
 
 struct ContentView: View {
+
+	@State private var user: User?
+
 	var body: some View {
 		VStack {
-			GoogleSignInButton {
-				guard let windowScene = UIApplication.shared.connectedScenes.first(where: {
-					$0.activationState == .foregroundActive
-				}) as? UIWindowScene, let rootViewController = windowScene.keyWindow?.rootViewController else {
-					fatalError()
+			if let user {
+				let _ = print(user.email)
+				HStack {
+					Text(user.email ?? "")
+						.font(.title)
+					Text(user.oidcToken ?? "")
+						.font(.title3)
 				}
-				Task {
-					do {
-						let result = try await GIDSignIn.sharedInstance.signIn(
-							withPresenting: rootViewController
-						)
-						let idToken = result.user.idToken
-						logger.debug("idToken: \(idToken)")
-						try await userService.login(with: result.user)
-					} catch {
-						logger.error("\(error)")
+				.padding()
+			} else {
+				GoogleSignInButton {
+					guard let windowScene = UIApplication.shared.connectedScenes.first(where: {
+						$0.activationState == .foregroundActive
+					}) as? UIWindowScene, let rootViewController = windowScene.keyWindow?.rootViewController else {
+						fatalError()
+					}
+					Task {
+						do {
+							let result = try await GIDSignIn.sharedInstance.signIn(
+								withPresenting: rootViewController
+							)
+							let idToken = result.user.idToken
+							logger.debug("idToken: \(idToken)")
+							user = try await userService.login(with: result.user)
+							print(user)
+						} catch {
+							logger.error("\(error)")
+						}
 					}
 				}
+				.padding()
 			}
-			.padding()
 		}
 	}
 }

@@ -15,11 +15,14 @@ final class User: Model, Content {
 	@ID(key: .id)
 	var id: UUID?
 
+	@Field(key: .string("oidc_token"))
 	var oidcToken: String?
+	@Field(key: .string("oidc_provider"))
 	var oidcProvider: OidcProvider?
+	@Field(key: "email")
 	var email: String?
 }
 
-public enum OidcProvider: String, Codable {
+public enum OidcProvider: String, Codable, Sendable {
 	case google
 }
