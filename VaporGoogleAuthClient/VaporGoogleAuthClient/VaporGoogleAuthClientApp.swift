@@ -5,6 +5,7 @@
 //  Created by Fumiya Tanaka on 2024/04/27.
 //
 
+import Atoms
 import SwiftUI
 import GoogleSignIn
 import OSLog
@@ -17,19 +18,9 @@ struct VaporGoogleAuthClientApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
-				.onOpenURL { url in
-					GIDSignIn.sharedInstance.handle(url)
-				}
-				.task {
-					do {
-						let user = try await GIDSignIn.sharedInstance.restorePreviousSignIn()
-						logger.info("\(user)")
-						try await userService.login(with: user)
-					} catch {
-						logger.error("\(error)")
-					}
-				}
+			AtomRoot {
+				ContentView()
+			}
         }
     }
 }

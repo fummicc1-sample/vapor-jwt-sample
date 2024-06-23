@@ -25,17 +25,20 @@ public struct UserService {
 		let url = URL(string: "http://localhost:8080/auth/google/login")!
 		var request = URLRequest(url: url)
 		request.httpMethod = "POST"
-		request.httpBody = try JSONSerialization.data(withJSONObject: [
-			"idToken": idToken,
-			"expirationDate": expiration.timeIntervalSince1970,
-			"email": user.profile?.email,
-		])
+		request.httpBody = try JSONEncoder().encode(
+			LoginRequest(
+				idToken: idToken,
+				oidcTokenExpirationDate: expiration.timeIntervalSince1970,
+				email: user.profile?.email ?? ""
+			)
+		)
 		let (data, _) = try await session.data(for: request)
-		print(try JSONSerialization.jsonObject(with: data))
 		let decoder = JSONDecoder()
-//		decoder.keyDecodingStrategy = .convertFromSnakeCase
-		let user = try decoder.decode(User.self, from: data)
-		print(user.email, user.id, user.oidcToken, user.oidcProvider)
+		let response = try decoder.decode(
+			LogInResponse.self,
+			from: data
+		)
+		let user = response.user
 		return user
 	}
 }
@@ -43,5 +46,16 @@ public struct UserService {
 extension UserService {
 	public enum Error: LocalizedError {
 		case idTokenNotFound(user: GIDGoogleUser)
+	}
+
+	public struct LoginRequest: Codable {
+		let idToken: String
+		let oidcTokenExpirationDate: Double
+		let email: String
+	}
+
+	public struct LogInResponse: Codable {
+		let user: User
+		let accessToken: String
 	}
 }

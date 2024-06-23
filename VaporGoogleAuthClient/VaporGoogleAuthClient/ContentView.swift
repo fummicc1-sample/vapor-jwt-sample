@@ -5,23 +5,26 @@
 //  Created by Fumiya Tanaka on 2024/04/27.
 //
 
-import SwiftUI
+import Atoms
 import GoogleSignIn
 import GoogleSignInSwift
+import SwiftUI
 
 struct ContentView: View {
 
-	@State private var user: User?
+	@WatchState(UserAtom())
+	var user
 
 	var body: some View {
-		VStack {
+		VStack(alignment: .leading) {
 			if let user {
-				let _ = print(user.email)
+				Text("Logged In")
+					.font(.largeTitle)
+				Text(user.email ?? "")
+					.font(.title)
 				HStack {
-					Text(user.email ?? "")
-						.font(.title)
-					Text(user.oidcToken ?? "")
-						.font(.title3)
+					Spacer()
+					Text(user.oidcProvider?.name ?? "")
 				}
 				.padding()
 			} else {
@@ -46,6 +49,21 @@ struct ContentView: View {
 					}
 				}
 				.padding()
+			}
+		}
+		.padding()
+		.onOpenURL { url in
+			GIDSignIn.sharedInstance.handle(url)
+		}
+		.task {
+			do {
+				let user = try await GIDSignIn.sharedInstance.restorePreviousSignIn()
+				logger.info("\(user)")
+				self.user = try await userService.login(
+					with: user
+				)
+			} catch {
+				logger.error("\(error)")
 			}
 		}
 	}

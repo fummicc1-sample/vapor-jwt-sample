@@ -1,24 +1,27 @@
 import Foundation
 
-@Observable
-public class User: Codable {
+public struct User: Codable, Sendable {
 	var id: String?
-
-	var oidcToken: String?
 
 	var oidcProvider: OidcProvider?
 
 	var email: String?
 
 	enum CodingKeys: String, CodingKey {
-		case _id = "id"
-		case _oidcToken = "oidcToken"
-		case _oidcProvider = "oidcProvider"
-		case _email = "email"
+		case id = "id"
+		case oidcProvider = "oidcProvider"
+		case email = "email"
 	}
 }
 
 
 public enum OidcProvider: String, Codable, Sendable {
 	case google
+
+	var name: String {
+		switch self {
+		case .google:
+			"Googleでログイン済み"
+		}
+	}
 }
